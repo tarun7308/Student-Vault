@@ -14,6 +14,7 @@ require('./config/passport');
 connectDB();
 
 const app  = express();
+app.set('trust proxy', 1); // Trust Railway's reverse proxy
 const PORT = process.env.PORT || 3000;
 
 // ── Rate Limiters ────────────────────────────────────────────────────────────
