@@ -6,7 +6,10 @@ const { generateToken } = require('../utils/helpers');
 // Reusable email transporter
 const createTransporter = () => nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    connectionTimeout: 2500, // 2.5 seconds
+    greetingTimeout: 2500,
+    socketTimeout: 3000
 });
 
 // @desc    Register a new user
@@ -50,7 +53,9 @@ const signup = async (req, res) => {
         const emailConfigured = process.env.EMAIL_USER &&
                                 process.env.EMAIL_PASS &&
                                 !process.env.EMAIL_USER.includes('your_email') &&
-                                !process.env.EMAIL_PASS.includes('your_app_password');
+                                !process.env.EMAIL_USER.includes('your_real_gmail') &&
+                                !process.env.EMAIL_PASS.includes('your_app_password') &&
+                                !process.env.EMAIL_PASS.includes('abcdefghijklmnop');
 
         if (emailConfigured) {
             try {
