@@ -100,17 +100,9 @@ const approveRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot approve: Book out of stock. Request rejected.' });
         }
 
-        // Decrease available copies
-        book.availableCopies -= 1;
-        await book.save();
-
-        // Update request status
-        request.status = 'approved';
-        await request.save();
-
         // Use custom dueDate if provided, otherwise default to 14 days
         let dueDate;
-        if (req.body.dueDate) {
+        if (req.body && req.body.dueDate) {
             dueDate = new Date(req.body.dueDate);
             // Validate it's in the future
             if (isNaN(dueDate.getTime()) || dueDate <= new Date()) {
@@ -122,11 +114,20 @@ const approveRequest = async (req, res) => {
             dueDate.setDate(dueDate.getDate() + 14);
         }
 
+        // Create the IssuedBook document first to ensure it succeeds before modifying other documents
         const issuedBook = await IssuedBook.create({
             student: request.student,
             book: request.book,
             dueDate
         });
+
+        // Decrease available copies
+        book.availableCopies -= 1;
+        await book.save();
+
+        // Update request status
+        request.status = 'approved';
+        await request.save();
 
         res.json({ success: true, message: 'Request approved and book issued', data: issuedBook });
     } catch (error) {
