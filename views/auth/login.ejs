@@ -190,10 +190,14 @@ function setRole(role) {
     const s = document.getElementById('btn-student');
     const l = document.getElementById('btn-librarian');
     if (role === 'student') {
-        s.classList.add('active'); l.classList.remove('active');
+        s.classList.add('active');
+        s.style.color = '';
+        l.classList.remove('active');
         l.style.color = 'var(--text-muted)';
     } else {
-        l.classList.add('active'); s.classList.remove('active');
+        l.classList.add('active');
+        l.style.color = '';
+        s.classList.remove('active');
         s.style.color = 'var(--text-muted)';
     }
 }
