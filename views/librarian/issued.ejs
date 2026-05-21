@@ -1,0 +1,161 @@
+<%- include('../partials/header', { title: 'Issued Books – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+            <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">Issued Books</h1>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Track all active issues and due dates.</p>
+        </div>
+        <div class="flex items-center rounded-xl px-4 py-2.5 gap-3 w-full sm:w-64" style="background: var(--bg-card); border: 1.5px solid var(--border);">
+            <i class="fa-solid fa-search text-sm" style="color: var(--text-muted);"></i>
+            <input type="text" id="issuedSearch" oninput="filterIssued()" placeholder="Search student or book…"
+                class="bg-transparent border-none outline-none text-sm flex-1" style="color: var(--text-primary); font-family: Outfit, sans-serif;">
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <%
+        const totalIssued   = issuedBooks ? issuedBooks.length : 0;
+        const overdueCount  = issuedBooks ? issuedBooks.filter(ib => now > ib.dueDate).length : 0;
+        const normalCount   = totalIssued - overdueCount;
+    %>
+    <div class="grid grid-cols-3 gap-4 mb-7">
+        <div class="sv-card p-4 text-center">
+            <p class="text-2xl font-extrabold" style="color: var(--text-primary);"><%= totalIssued %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Total Active</p>
+        </div>
+        <div class="sv-card p-4 text-center" style="border-left: 3px solid #10b981;">
+            <p class="text-2xl font-extrabold text-emerald-500"><%= normalCount %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">On Time</p>
+        </div>
+        <div class="sv-card p-4 text-center" style="border-left: 3px solid #ef4444;">
+            <p class="text-2xl font-extrabold text-red-500"><%= overdueCount %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Overdue</p>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="sv-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="sv-table" id="issuedTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Book</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Fine</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (issuedBooks && issuedBooks.length > 0) { %>
+                        <% issuedBooks.forEach(ib => {
+                            const isOverdue = now > ib.dueDate;
+                            const diffDays  = Math.ceil(Math.abs(now - ib.dueDate) / 86400000);
+                            const fine      = isOverdue ? diffDays : 0;
+                        %>
+                        <tr data-student="<%= ib.student.name.toLowerCase() %>" data-book="<%= ib.book.title.toLowerCase() %>"
+                            style="<%= isOverdue ? 'background: rgba(239,68,68,0.04); border-left: 3px solid #ef4444;' : '' %>">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <img src="https://ui-avatars.com/api/?name=<%= encodeURIComponent(ib.student.name) %>&background=1485e0&color=fff&bold=true&size=32"
+                                        class="w-8 h-8 rounded-full flex-shrink-0" alt="<%= ib.student.name %>">
+                                    <span class="font-semibold text-sm" style="color: var(--text-primary);"><%= ib.student.name %></span>
+                                </div>
+                            </td>
+                            <td>
+                                <p class="font-semibold text-sm" style="color: var(--text-primary);"><%= ib.book.title %></p>
+                            </td>
+                            <td>
+                                <span class="text-sm" style="color: var(--text-muted);">
+                                    <%= new Date(ib.issueDate).toLocaleDateString('en-IN', {day:'numeric', month:'short'}) %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-sm font-semibold" style="color: <%= isOverdue ? '#dc2626' : diffDays <= 3 ? '#d97706' : 'var(--text-primary)' %>;">
+                                    <%= new Date(ib.dueDate).toLocaleDateString('en-IN', {day:'numeric', month:'short'}) %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (fine > 0) { %>
+                                    <span class="sv-badge sv-badge-red font-bold">₹<%= fine %></span>
+                                <% } else { %>
+                                    <span class="text-xs" style="color: var(--text-muted);">—</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (isOverdue) { %>
+                                    <span class="sv-badge sv-badge-red">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                        Overdue (<%= diffDays %>d)
+                                    </span>
+                                <% } else if (diffDays <= 3) { %>
+                                    <span class="sv-badge sv-badge-amber">Due Soon</span>
+                                <% } else { %>
+                                    <span class="sv-badge sv-badge-blue">Issued</span>
+                                <% } %>
+                            </td>
+                            <td class="text-right">
+                                <% if (isOverdue) { %>
+                                <button class="text-xs font-semibold px-3 py-1.5 rounded-lg mr-2 transition-all hover:scale-105"
+                                    style="background:#dbeafe; color:#1d4ed8;"
+                                    onclick="showToast('Notification feature coming soon!', 'info')">
+                                    <i class="fa-solid fa-bell mr-1"></i>Notify
+                                </button>
+                                <% } %>
+                                <button onclick="handleReturn('<%= ib._id %>')"
+                                    class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                                    style="background:#d1fae5; color:#059669;">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i>Return
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" class="py-16 text-center">
+                                <i class="fa-solid fa-hand-holding-hand text-5xl mb-4 block" style="color: var(--border);"></i>
+                                <p class="font-semibold" style="color: var(--text-muted);">No books currently issued</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+</div>
+</div>
+
+<script>
+function filterIssued() {
+    const q = document.getElementById('issuedSearch').value.toLowerCase();
+    document.querySelectorAll('#issuedTable tbody tr[data-student]').forEach(row => {
+        row.style.display = (row.dataset.student.includes(q) || row.dataset.book.includes(q)) ? '' : 'none';
+    });
+}
+
+async function handleReturn(id) {
+    if (!confirm('Mark this book as returned?')) return;
+    try {
+        const res  = await fetch(`/api/issues/issued/${id}/return`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ Book marked as returned!', 'success');
+            setTimeout(() => window.location.reload(), 900);
+        } else { showToast(data.message || 'Action failed', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+</script>
+
+<%- include('../partials/footer') %>

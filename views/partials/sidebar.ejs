@@ -1,0 +1,109 @@
+<!-- Sidebar -->
+<aside id="sidebar" class="sv-sidebar w-64 flex-shrink-0 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-30 shadow-2xl flex flex-col">
+    
+    <!-- Branding -->
+    <div class="h-16 flex items-center px-5 gap-3" style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+        <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg,#1485e0,#0e3a5e);">
+            <i class="fa-solid fa-building-columns text-white text-sm"></i>
+        </div>
+        <div>
+            <p class="font-bold text-white text-base leading-none">StudentVault</p>
+            <p class="text-xs mt-0.5" style="color:#64a3c8;">Library System</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 py-5 overflow-y-auto space-y-1">
+        <% if (role === 'librarian') { %>
+            <p class="text-xs font-bold uppercase tracking-widest px-3 mb-3" style="color:#4a7fa5;">Librarian Panel</p>
+
+            <a href="/librarian/dashboard" class="sv-nav-link <%= path === '/librarian/dashboard' ? 'active' : '' %>">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <a href="/librarian/students" class="sv-nav-link <%= path === '/librarian/students' ? 'active' : '' %>">
+                <i class="fa-solid fa-users"></i> Students
+            </a>
+            <a href="/librarian/books" class="sv-nav-link <%= path === '/librarian/books' ? 'active' : '' %>">
+                <i class="fa-solid fa-book-open"></i> Books
+            </a>
+            <a href="/librarian/requests" class="sv-nav-link <%= path === '/librarian/requests' ? 'active' : '' %>">
+                <i class="fa-solid fa-inbox"></i> Requests
+            </a>
+            <a href="/librarian/issued" class="sv-nav-link <%= path === '/librarian/issued' ? 'active' : '' %>">
+                <i class="fa-solid fa-hand-holding-hand"></i> Issued Books
+            </a>
+            <a href="/librarian/fines" class="sv-nav-link <%= path === '/librarian/fines' ? 'active' : '' %>">
+                <i class="fa-solid fa-indian-rupee-sign"></i> Fine Tracker
+            </a>
+            <a href="/librarian/categories" class="sv-nav-link <%= path === '/librarian/categories' ? 'active' : '' %>">
+                <i class="fa-solid fa-tags"></i> Categories
+            </a>
+            <a href="/librarian/analytics" class="sv-nav-link <%= path === '/librarian/analytics' ? 'active' : '' %>">
+                <i class="fa-solid fa-chart-pie"></i> Analytics
+            </a>
+
+        <% } else if (role === 'student') { %>
+            <p class="text-xs font-bold uppercase tracking-widest px-3 mb-3" style="color:#4a7fa5;">Student Panel</p>
+
+            <a href="/student/dashboard" class="sv-nav-link <%= path === '/student/dashboard' ? 'active' : '' %>">
+                <i class="fa-solid fa-gauge-high"></i> Dashboard
+            </a>
+            <a href="/student/browse" class="sv-nav-link <%= path === '/student/browse' ? 'active' : '' %>">
+                <i class="fa-solid fa-book-open"></i> Browse Books
+            </a>
+            <a href="/student/mybooks" class="sv-nav-link <%= path === '/student/mybooks' ? 'active' : '' %>">
+                <i class="fa-solid fa-book-bookmark"></i> My Books
+            </a>
+            <a href="/student/requests" class="sv-nav-link <%= path === '/student/requests' ? 'active' : '' %>">
+                <i class="fa-solid fa-clock-rotate-left"></i> My Requests
+            </a>
+            <a href="/student/request_new" class="sv-nav-link <%= path === '/student/request_new' ? 'active' : '' %>">
+                <i class="fa-solid fa-lightbulb"></i> Suggest a Book
+            </a>
+        <% } %>
+    </nav>
+
+    <!-- Bottom User Section -->
+    <div class="p-3" style="border-top: 1px solid rgba(255,255,255,0.08);">
+        <!-- Dark Mode Toggle -->
+        <button onclick="toggleDarkMode()" class="sv-nav-link w-full mb-2" style="justify-content: space-between;">
+            <span class="flex items-center gap-3">
+                <i class="fa-solid fa-circle-half-stroke"></i> Dark Mode
+            </span>
+            <div id="dark-toggle-pill" class="w-10 h-5 rounded-full flex items-center px-0.5 transition-all" style="background: rgba(255,255,255,0.15);">
+                <div id="dark-toggle-dot" class="w-4 h-4 rounded-full bg-white transition-transform"></div>
+            </div>
+        </button>
+        <button onclick="handleLogout()" class="sv-nav-link w-full hover:bg-red-900" style="color: #f87171;">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </button>
+    </div>
+</aside>
+
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 hidden md:hidden"></div>
+
+<script>
+// Sync dark mode toggle pill
+(function(){
+    function syncPill() {
+        const dot = document.getElementById('dark-toggle-dot');
+        const pill = document.getElementById('dark-toggle-pill');
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (dot) dot.style.transform = isDark ? 'translateX(20px)' : 'translateX(0)';
+        if (pill) pill.style.background = isDark ? '#1485e0' : 'rgba(255,255,255,0.15)';
+    }
+    syncPill();
+    const orig = window.toggleDarkMode;
+    window.toggleDarkMode = function() { orig && orig(); syncPill(); };
+    // Also re-sync after original runs
+    document.documentElement.addEventListener && setTimeout(syncPill, 50);
+})();
+
+async function handleLogout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'GET' });
+    } catch(e){}
+    window.location.href = '/login';
+}
+</script>

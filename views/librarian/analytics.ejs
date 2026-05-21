@@ -1,0 +1,145 @@
+<%- include('../partials/header', { title: 'Analytics – StudentVault' }) %>
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+  <div class="mb-7">
+    <h1 class="text-2xl font-extrabold" style="color:var(--text-primary);">Library Analytics</h1>
+    <p class="text-sm mt-1" style="color:var(--text-muted);">Real-time insights into library activity and trends.</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #3b82f6;">
+      <p class="text-2xl font-extrabold" style="color:var(--text-primary);"><%= kpis.totalBooks %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">Total Books</p>
+    </div>
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #8b5cf6;">
+      <p class="text-2xl font-extrabold" style="color:var(--text-primary);"><%= kpis.totalStudents %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">Students</p>
+    </div>
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #10b981;">
+      <p class="text-2xl font-extrabold" style="color:var(--text-primary);"><%= kpis.totalIssued %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">All-time Issues</p>
+    </div>
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #06b6d4;">
+      <p class="text-2xl font-extrabold" style="color:var(--text-primary);"><%= kpis.totalReturned %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">Returned</p>
+    </div>
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #f59e0b;">
+      <p class="text-2xl font-extrabold" style="color:var(--text-primary);"><%= kpis.totalActive %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">Active Issues</p>
+    </div>
+    <div class="sv-card p-4 text-center" style="border-top:3px solid #ef4444;">
+      <p class="text-2xl font-extrabold text-red-500"><%= kpis.totalOverdue %></p>
+      <p class="text-xs mt-1" style="color:var(--text-muted);">Overdue</p>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-7">
+    <div class="sv-card p-5 lg:col-span-2">
+      <h3 class="font-bold text-sm mb-4" style="color:var(--text-primary);">
+        <i class="fa-solid fa-chart-line mr-2 text-blue-500"></i>Issues vs Returns — Last 6 Months
+      </h3>
+      <canvas id="trendChart" height="110"></canvas>
+    </div>
+    <div class="sv-card p-5">
+      <h3 class="font-bold text-sm mb-4" style="color:var(--text-primary);">
+        <i class="fa-solid fa-chart-pie mr-2 text-purple-500"></i>Issues by Category
+      </h3>
+      <canvas id="catChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Books + Students -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="sv-card p-5">
+      <h3 class="font-bold text-sm mb-5" style="color:var(--text-primary);">
+        <i class="fa-solid fa-trophy mr-2 text-amber-500"></i>Most Borrowed Books
+      </h3>
+      <% if (topBooks && topBooks.length > 0) {
+           const bc = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444'];
+           const mx = topBooks[0].count;
+           topBooks.forEach((b,i) => { %>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0"
+          style="background:<%=bc[i]%>;"><%=i+1%></span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-1">
+            <p class="text-sm font-semibold truncate" style="color:var(--text-primary);"><%= b.title %></p>
+            <span class="text-xs font-bold ml-2" style="color:<%=bc[i]%>;"><%= b.count %>x</span>
+          </div>
+          <div class="h-1.5 rounded-full" style="background:var(--bg-primary);">
+            <div class="h-full rounded-full" style="width:<%=Math.round((b.count/mx)*100)%>%; background:<%=bc[i]%>;"></div>
+          </div>
+          <p class="text-xs mt-0.5" style="color:var(--text-muted);">by <%= b.author %></p>
+        </div>
+      </div>
+      <% }) } else { %>
+      <p class="text-center text-sm py-8" style="color:var(--text-muted);">No data yet</p>
+      <% } %>
+    </div>
+
+    <div class="sv-card p-5">
+      <h3 class="font-bold text-sm mb-5" style="color:var(--text-primary);">
+        <i class="fa-solid fa-users mr-2 text-emerald-500"></i>Most Active Students
+      </h3>
+      <% if (topStudents && topStudents.length > 0) {
+           const medals = ['🥇','🥈','🥉'];
+           const ms = topStudents[0].count;
+           topStudents.forEach((s,i) => { %>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-lg flex-shrink-0"><%= medals[i] || (i+1) %></span>
+        <img src="<%= s.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(s.name)+'&background=1485e0&color=fff&bold=true&size=32' %>"
+          class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-1">
+            <p class="text-sm font-semibold truncate" style="color:var(--text-primary);"><%= s.name %></p>
+            <span class="sv-badge sv-badge-blue text-xs ml-2"><%= s.count %> books</span>
+          </div>
+          <div class="h-1.5 rounded-full" style="background:var(--bg-primary);">
+            <div class="h-full rounded-full bg-emerald-500" style="width:<%=Math.round((s.count/ms)*100)%>%;"></div>
+          </div>
+        </div>
+      </div>
+      <% }) } else { %>
+      <p class="text-center text-sm py-8" style="color:var(--text-muted);">No data yet</p>
+      <% } %>
+    </div>
+  </div>
+
+</main>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const _dark = document.documentElement.getAttribute('data-theme')==='dark';
+const _grid = _dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+const _lbl  = _dark?'#94a3b8':'#64748b';
+
+new Chart(document.getElementById('trendChart'),{
+  type:'line',
+  data:{
+    labels:<%- chart.labels %>,
+    datasets:[
+      {label:'Issued',data:<%- chart.issued %>,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#3b82f6',pointRadius:5},
+      {label:'Returned',data:<%- chart.returned %>,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#10b981',pointRadius:5}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{labels:{color:_lbl,font:{family:'Outfit'}}}},scales:{x:{grid:{color:_grid},ticks:{color:_lbl}},y:{grid:{color:_grid},ticks:{color:_lbl,precision:0},beginAtZero:true}}}
+});
+
+new Chart(document.getElementById('catChart'),{
+  type:'doughnut',
+  data:{
+    labels:<%- chart.catLabels %>,
+    datasets:[{data:<%- chart.catData %>,backgroundColor:['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#f97316','#ec4899'],borderWidth:2,borderColor:_dark?'#1e293b':'#ffffff'}]
+  },
+  options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:_lbl,font:{family:'Outfit',size:11},padding:10,boxWidth:12}}}}
+});
+</script>
+<%- include('../partials/footer') %>

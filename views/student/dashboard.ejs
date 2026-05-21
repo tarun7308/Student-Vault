@@ -1,0 +1,243 @@
+<%- include('../partials/header', { title: 'Student Dashboard – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+            <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">
+                👋 Hello, <%= user.name.split(' ')[0] %>!
+            </h1>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">
+                <%= new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) %>
+            </p>
+        </div>
+        <a href="/student/browse" class="sv-btn sv-btn-primary">
+            <i class="fa-solid fa-book-open"></i> Browse Books
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+
+        <div class="sv-stat-card" style="border-left: 4px solid #3b82f6;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#eff6ff;">
+                    <i class="fa-solid fa-book-open text-blue-500 text-lg"></i>
+                </div>
+                <span class="text-xs font-bold sv-badge sv-badge-blue">Active</span>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.booksIssued %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Books Issued</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#fffbeb;">
+                    <i class="fa-solid fa-hourglass-half text-amber-500 text-lg"></i>
+                </div>
+                <span class="text-xs font-bold sv-badge sv-badge-amber">Pending</span>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.pendingRequests %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Pending Requests</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid <%= stats.overdueCount > 0 ? '#ef4444' : '#10b981' %>;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:<%= stats.overdueCount > 0 ? '#fef2f2' : '#f0fdf4' %>;">
+                    <i class="fa-solid fa-triangle-exclamation text-lg" style="color:<%= stats.overdueCount > 0 ? '#ef4444' : '#10b981' %>;"></i>
+                </div>
+                <span class="sv-badge <%= stats.overdueCount > 0 ? 'sv-badge-red' : 'sv-badge-green' %> text-xs font-bold">
+                    <%= stats.overdueCount > 0 ? 'Overdue' : 'On Time' %>
+                </span>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.overdueCount %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Overdue Books</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid <%= stats.totalFines > 0 ? '#ef4444' : '#10b981' %>;">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:<%= stats.totalFines > 0 ? '#fef2f2' : '#f0fdf4' %>;">
+                    <i class="fa-solid fa-indian-rupee-sign text-lg" style="color:<%= stats.totalFines > 0 ? '#ef4444' : '#10b981' %>;"></i>
+                </div>
+                <% if (stats.totalFines > 0) { %>
+                <a href="/student/mybooks" class="text-xs font-bold sv-badge sv-badge-red">Pay Now</a>
+                <% } %>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);">₹<%= stats.totalFines.toFixed(0) %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Total Fines</p>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Due Soon -->
+        <div class="sv-card p-6 lg:col-span-1">
+            <h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color: var(--text-primary);">
+                <i class="fa-regular fa-calendar-days text-brand-500"></i> Due Soon
+            </h3>
+            <div class="space-y-3">
+                <% if (upcomingDue && upcomingDue.length > 0) { %>
+                    <% upcomingDue.forEach(ib => {
+                        const isOverdue = now > ib.dueDate;
+                        const diffMs    = Math.abs(now - ib.dueDate);
+                        const diffDays  = Math.ceil(diffMs / 86400000);
+                    %>
+                    <div class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.01]"
+                        style="background: var(--bg-primary); border: 1px solid <%= isOverdue ? '#fecaca' : 'var(--border)' %>;">
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style="background: <%= isOverdue ? '#fee2e2' : '#eff6ff' %>;">
+                            <i class="fa-solid fa-book text-sm" style="color: <%= isOverdue ? '#dc2626' : '#3b82f6' %>;"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold truncate" style="color: var(--text-primary);"><%= ib.book.title %></p>
+                            <p class="text-xs" style="color: var(--text-muted);"><%= ib.book.author %></p>
+                        </div>
+                        <% if (isOverdue) { %>
+                        <span class="sv-badge sv-badge-red text-xs flex-shrink-0">Overdue</span>
+                        <% } else { %>
+                        <span class="sv-badge sv-badge-amber text-xs flex-shrink-0"><%= diffDays %>d</span>
+                        <% } %>
+                    </div>
+                    <% }) %>
+                    <a href="/student/mybooks" class="block text-center text-sm font-semibold mt-3" style="color: var(--accent);">
+                        View all my books →
+                    </a>
+                <% } else { %>
+                    <div class="text-center py-8">
+                        <i class="fa-regular fa-circle-check text-4xl text-emerald-300 mb-3 block"></i>
+                        <p class="text-sm" style="color: var(--text-muted);">No books due soon</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Due Date Calendar -->
+        <div class="sv-card p-6 lg:col-span-1">
+            <h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color: var(--text-primary);">
+                <i class="fa-regular fa-calendar text-brand-500"></i> Due Date Calendar
+            </h3>
+            <div id="mini-calendar"></div>
+            <div class="mt-3 flex items-center gap-4 text-xs" style="color: var(--text-muted);">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-red-500 inline-block"></span> Due date
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-brand-500 inline-block"></span> Today
+                </span>
+            </div>
+        </div>
+
+        <!-- Recommended Books -->
+        <div class="sv-card p-6 lg:col-span-1">
+            <h3 class="text-base font-bold mb-5 flex items-center gap-2" style="color: var(--text-primary);">
+                <i class="fa-solid fa-wand-magic-sparkles text-brand-500"></i> Recommended
+            </h3>
+            <div class="space-y-3">
+                <% if (recommendedBooks && recommendedBooks.length > 0) { %>
+                    <% const bookColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#14b8a6'];
+                       recommendedBooks.forEach((book, i) => {
+                           const color = bookColors[i % bookColors.length]; %>
+                    <div class="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.01]"
+                        style="background: var(--bg-primary); border: 1px solid var(--border);">
+                        <div class="w-10 h-14 rounded-md flex items-center justify-center flex-shrink-0 shadow-md"
+                            style="background: linear-gradient(135deg, <%= color %>dd, <%= color %>88); border-left: 3px solid rgba(0,0,0,0.15);">
+                            <i class="fa-solid fa-book text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold truncate" style="color: var(--text-primary);"><%= book.title %></p>
+                            <p class="text-xs" style="color: var(--text-muted);"><%= book.author %></p>
+                            <button onclick="requestBook('<%= book._id %>')"
+                                class="mt-1.5 text-xs font-bold px-3 py-1 rounded-full"
+                                style="background: var(--accent-light); color: var(--accent);">
+                                Request →
+                            </button>
+                        </div>
+                    </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-8">
+                        <i class="fa-solid fa-book-open text-4xl text-slate-200 mb-3 block"></i>
+                        <p class="text-sm" style="color: var(--text-muted);">No recommendations yet</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+</main>
+</div>
+</div>
+
+<script>
+// ---- Mini Calendar ----
+(function() {
+    const dueDates = [
+        <% if (upcomingDue && upcomingDue.length > 0) { %>
+            <% upcomingDue.forEach((ib, i) => { %>
+                "<%= new Date(ib.dueDate).toDateString() %>"<%= i < upcomingDue.length - 1 ? ',' : '' %>
+            <% }) %>
+        <% } %>
+    ].map(d => new Date(d).toDateString());
+
+    const today = new Date();
+    const year  = today.getFullYear();
+    const month = today.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayNames   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+    let html = `<div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-bold" style="color: var(--text-primary);">${monthNames[month]} ${year}</span>
+    </div>
+    <div class="cal-grid">`;
+
+    dayNames.forEach(d => {
+        html += `<div class="cal-day text-xs font-bold" style="color: var(--text-muted);">${d}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day other-month"></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = new Date(year, month, d).toDateString();
+        const isToday = dateStr === today.toDateString();
+        const hasDue  = dueDates.includes(dateStr);
+        let cls = 'cal-day';
+        if (isToday) cls += ' today';
+        else if (hasDue) cls += ' has-due';
+        html += `<div class="${cls}" title="${hasDue ? 'Book due on this date!' : ''}">${d}</div>`;
+    }
+    html += '</div>';
+    document.getElementById('mini-calendar').innerHTML = html;
+})();
+
+// ---- Request Book ----
+async function requestBook(id) {
+    try {
+        const res = await fetch('/api/issues/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookId: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Request submitted successfully!', 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } else {
+            showToast(data.message || 'Failed to request book', 'error');
+        }
+    } catch (err) {
+        showToast('An error occurred', 'error');
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

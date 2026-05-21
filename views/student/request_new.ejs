@@ -1,0 +1,126 @@
+<%- include('../partials/header', { title: 'Suggest a Book – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7 flex items-start justify-center" style="background: var(--bg-primary);">
+    <div class="w-full max-w-2xl">
+
+        <!-- Hero Banner -->
+        <div class="rounded-2xl p-8 mb-6 relative overflow-hidden" style="background: linear-gradient(135deg,#0e3a5e,#1485e0);">
+            <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10" style="background: white; transform: translate(30%, -30%);"></div>
+            <div class="relative z-10 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/20 backdrop-blur flex-shrink-0">
+                    <i class="fa-solid fa-lightbulb text-yellow-300 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-white">Suggest a Book</h1>
+                    <p class="text-blue-200 text-sm mt-1">Can't find what you're looking for? Request the library to acquire it.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="sv-card overflow-hidden">
+            <form id="suggestForm" class="p-7 space-y-5" onsubmit="handleSuggestBook(event)">
+
+                <!-- Title -->
+                <div>
+                    <label class="sv-label">Book Title <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i class="fa-solid fa-book absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                        <input type="text" id="title" required class="sv-input pl-10"
+                            placeholder="e.g. Designing Data-Intensive Applications">
+                    </div>
+                </div>
+
+                <!-- Author -->
+                <div>
+                    <label class="sv-label">Author Name <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user-pen absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                        <input type="text" id="author" required class="sv-input pl-10"
+                            placeholder="e.g. Martin Kleppmann">
+                    </div>
+                </div>
+
+                <!-- ISBN (optional) -->
+                <div>
+                    <label class="sv-label">ISBN <span class="text-xs font-normal" style="color: var(--text-muted);">(optional)</span></label>
+                    <div class="relative">
+                        <i class="fa-solid fa-barcode absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                        <input type="text" class="sv-input pl-10" placeholder="e.g. 978-1449373320">
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div>
+                    <label class="sv-label">Why should the library add this book? <span class="text-red-500">*</span></label>
+                    <textarea id="reason" required rows="4" class="sv-input resize-none"
+                        placeholder="Mention the course, topic, or reason why this book would benefit students..."></textarea>
+                    <p class="text-xs mt-1.5" style="color: var(--text-muted);">Include course codes or syllabus requirements if applicable.</p>
+                </div>
+
+                <!-- Info box -->
+                <div class="flex items-start gap-3 p-4 rounded-xl" style="background: var(--accent-light); border: 1px solid #b9e7ff;">
+                    <i class="fa-solid fa-circle-info text-brand-500 mt-0.5 flex-shrink-0"></i>
+                    <p class="text-sm" style="color: var(--text-secondary);">
+                        Requests are reviewed <strong>weekly</strong> by the library committee. You'll be notified once the librarian takes action on your suggestion.
+                    </p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <a href="/student/dashboard" class="sv-btn sv-btn-secondary flex-1 justify-center">
+                        <i class="fa-solid fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" id="suggestBtn" class="sv-btn sv-btn-primary flex-1 justify-center">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Suggestion
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</div>
+</div>
+
+<script>
+async function handleSuggestBook(e) {
+    e.preventDefault();
+    const btn = document.getElementById('suggestBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+    btn.disabled = true;
+
+    const payload = {
+        title:  document.getElementById('title').value,
+        author: document.getElementById('author').value,
+        reason: document.getElementById('reason').value
+    };
+
+    try {
+        const res  = await fetch('/api/book-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('📚 Book suggestion submitted!', 'success');
+            setTimeout(() => window.location.href = '/student/dashboard', 1200);
+        } else {
+            showToast(data.message || 'Error submitting suggestion', 'error');
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Suggestion';
+            btn.disabled = false;
+        }
+    } catch (err) {
+        showToast('Network error. Please try again.', 'error');
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Suggestion';
+        btn.disabled = false;
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

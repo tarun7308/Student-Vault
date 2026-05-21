@@ -1,0 +1,190 @@
+<%- include('../partials/header', { title: 'Issue Requests – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Header -->
+    <div class="mb-7">
+        <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">Pending Requests</h1>
+        <p class="text-sm mt-1" style="color: var(--text-muted);">
+            Review and approve or reject student book requests ·
+            <strong><%= requests ? requests.length : 0 %></strong> pending
+        </p>
+    </div>
+
+    <!-- Requests List -->
+    <% if (requests && requests.length > 0) { %>
+        <div class="space-y-4">
+            <% const spineColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#14b8a6','#f97316'];
+               requests.forEach((request, idx) => {
+                const color = spineColors[idx % spineColors.length];
+                const daysAgo = Math.floor((Date.now() - new Date(request.requestDate)) / 86400000);
+            %>
+            <div class="sv-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+
+                <!-- Left: Book + Student info -->
+                <div class="flex items-start gap-4 flex-1 min-w-0">
+                    <!-- Book Spine -->
+                    <div class="w-12 h-16 rounded-md flex items-center justify-center flex-shrink-0 shadow-md"
+                        style="background: linear-gradient(135deg,<%= color %>cc,<%= color %>66); border-left: 4px solid rgba(0,0,0,0.15);">
+                        <span class="text-white font-extrabold text-lg"><%= request.book.title.charAt(0) %></span>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <h3 class="font-bold text-base" style="color: var(--text-primary);">
+                                <%= request.book.title %>
+                            </h3>
+                            <span class="sv-badge sv-badge-blue text-xs"><%= request.book.category %></span>
+                        </div>
+
+                        <div class="flex items-center gap-2 mb-3">
+                            <img src="<%= request.student.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(request.student.name)+'&background=1485e0&color=fff&bold=true&size=24' %>"
+                                class="w-5 h-5 rounded-full object-cover" alt="">
+                            <p class="text-sm" style="color: var(--text-secondary);">
+                                Requested by <strong style="color: var(--text-primary);"><%= request.student.name %></strong>
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 text-xs" style="color: var(--text-muted);">
+                            <span><i class="fa-regular fa-clock mr-1"></i>
+                                <%= daysAgo === 0 ? 'Today' : daysAgo + ' day' + (daysAgo > 1 ? 's' : '') + ' ago' %>
+                            </span>
+                            <span><i class="fa-regular fa-calendar mr-1"></i>
+                                <%= new Date(request.requestDate).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %>
+                            </span>
+                            <span><i class="fa-regular fa-envelope mr-1"></i><%= request.student.email %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Action Buttons -->
+                <div class="flex gap-3 flex-shrink-0">
+                    <button onclick="handleAction('<%= request._id %>', 'reject')"
+                        class="sv-btn w-full sm:w-auto justify-center"
+                        style="background: #fee2e2; color: #dc2626; border: 1.5px solid #fecaca;">
+                        <i class="fa-solid fa-xmark"></i> Reject
+                    </button>
+                    <button onclick="openApproveModal('<%= request._id %>', '<%= request.book.title.replace(/'/g, `\\'`) %>')"
+                        class="sv-btn sv-btn-success w-full sm:w-auto justify-center">
+                        <i class="fa-solid fa-check"></i> Approve
+                    </button>
+                </div>
+            </div>
+            <% }) %>
+        </div>
+
+    <% } else { %>
+        <div class="sv-card p-16 text-center">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background: var(--bg-primary);">
+                <i class="fa-regular fa-circle-check text-4xl text-emerald-400"></i>
+            </div>
+            <p class="text-lg font-bold" style="color: var(--text-primary);">All caught up!</p>
+            <p class="text-sm mt-2" style="color: var(--text-muted);">No pending book requests at this time.</p>
+        </div>
+    <% } %>
+
+</main>
+</div>
+</div>
+
+<!-- Approve with Custom Due Date Modal -->
+<div id="approveModal" class="sv-modal-overlay">
+    <div class="sv-modal max-w-sm">
+        <div class="sv-modal-header">
+            <h3 class="text-base font-bold" style="color:var(--text-primary);">
+                <i class="fa-solid fa-calendar-check mr-2 text-emerald-500"></i>Set Due Date
+            </h3>
+            <button onclick="toggleModal('approveModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--bg-primary);color:var(--text-muted);">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sv-modal-body space-y-4">
+            <input type="hidden" id="approve-request-id">
+            <p class="text-sm" style="color:var(--text-secondary);">
+                Approving: <strong id="approve-book-title" style="color:var(--text-primary);"></strong>
+            </p>
+            <div>
+                <label class="sv-label">Due Date <span class="text-red-500">*</span></label>
+                <input type="date" id="approve-due-date" class="sv-input"
+                    min="<%= new Date(Date.now() + 86400000).toISOString().split('T')[0] %>">
+                <p class="text-xs mt-1" style="color:var(--text-muted);">Default: 14 days from today</p>
+            </div>
+            <!-- Quick presets -->
+            <div class="flex flex-wrap gap-2">
+                <span class="text-xs font-semibold" style="color:var(--text-muted);">Quick:</span>
+                <button type="button" onclick="setDueDays(7)"  class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#dbeafe;color:#1d4ed8;">7 days</button>
+                <button type="button" onclick="setDueDays(14)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#d1fae5;color:#065f46;">14 days</button>
+                <button type="button" onclick="setDueDays(21)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#fef3c7;color:#92400e;">21 days</button>
+                <button type="button" onclick="setDueDays(30)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#ede9fe;color:#5b21b6;">30 days</button>
+            </div>
+        </div>
+        <div class="sv-modal-footer">
+            <button onclick="toggleModal('approveModal')" class="sv-btn sv-btn-secondary">Cancel</button>
+            <button onclick="confirmApprove()" class="sv-btn sv-btn-success">
+                <i class="fa-solid fa-check"></i> Confirm Approval
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set default due date to 14 days from today on page load
+(function() {
+    setDueDays(14);
+})();
+
+function setDueDays(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    document.getElementById('approve-due-date').value = d.toISOString().split('T')[0];
+}
+
+function openApproveModal(id, title) {
+    document.getElementById('approve-request-id').value = id;
+    document.getElementById('approve-book-title').textContent = title;
+    setDueDays(14); // reset to default
+    toggleModal('approveModal');
+}
+
+async function confirmApprove() {
+    const id      = document.getElementById('approve-request-id').value;
+    const dueDate = document.getElementById('approve-due-date').value;
+    if (!dueDate) { showToast('Please select a due date', 'warning'); return; }
+
+    try {
+        const res  = await fetch(`/api/issues/${id}/approve`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dueDate })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ Request approved! Book issued.', 'success');
+            toggleModal('approveModal');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Action failed', 'error');
+        }
+    } catch { showToast('Network error', 'error'); }
+}
+
+async function handleAction(id, action) {
+    if (!confirm(`${action === 'reject' ? 'Reject' : 'Approve'} this request?`)) return;
+    try {
+        const res  = await fetch(`/api/issues/${id}/${action}`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) {
+            showToast(action === 'approve' ? '✅ Request approved!' : '❌ Request rejected.', action === 'approve' ? 'success' : 'info');
+            setTimeout(() => window.location.reload(), 1000);
+        } else { showToast(data.message || 'Action failed', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+</script>
+
+<%- include('../partials/footer') %>

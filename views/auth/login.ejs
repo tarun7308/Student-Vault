@@ -1,0 +1,268 @@
+<%- include('../partials/header', { title: 'Login – StudentVault' }) %>
+
+<style>
+body { overflow: auto !important; height: auto !important; }
+.auth-bg {
+    background: linear-gradient(135deg, #0e3a5e 0%, #1485e0 50%, #0c4a6e 100%);
+    position: relative; overflow: hidden;
+}
+.auth-bg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.07) 0%, transparent 50%);
+}
+.auth-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.18;
+    animation: blobFloat 8s ease-in-out infinite;
+}
+@keyframes blobFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-20px) scale(1.05); }
+}
+.role-tab { transition: all 0.25s; cursor: pointer; }
+.role-tab.active {
+    background: linear-gradient(135deg, #1485e0, #0e3a5e);
+    color: white; box-shadow: 0 4px 14px rgba(20,133,224,0.35);
+}
+</style>
+
+<div class="min-h-screen flex">
+    <!-- Left Panel -->
+    <div class="auth-bg hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative">
+        <div class="auth-blob w-72 h-72 bg-blue-300 top-10 left-10"></div>
+        <div class="auth-blob w-56 h-56 bg-indigo-400 bottom-20 right-10" style="animation-delay:3s;"></div>
+
+        <div class="relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur">
+                    <i class="fa-solid fa-building-columns text-white"></i>
+                </div>
+                <span class="text-white font-bold text-xl">StudentVault</span>
+            </div>
+        </div>
+
+        <div class="relative z-10">
+            <h1 class="text-5xl font-extrabold text-white leading-tight mb-5">
+                Your Library,<br/>
+                <span class="text-blue-200">Anywhere.</span>
+            </h1>
+            <p class="text-blue-200 text-lg leading-relaxed max-w-sm">
+                Access thousands of books, track issues, manage returns and fines — all from one smart platform.
+            </p>
+
+            <div class="mt-10 grid grid-cols-3 gap-4">
+                <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                    <p class="text-3xl font-extrabold text-white">5K+</p>
+                    <p class="text-blue-200 text-xs mt-1">Books</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                    <p class="text-3xl font-extrabold text-white">1.2K</p>
+                    <p class="text-blue-200 text-xs mt-1">Students</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                    <p class="text-3xl font-extrabold text-white">24/7</p>
+                    <p class="text-blue-200 text-xs mt-1">Access</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 text-blue-300 text-sm">
+            © 2025 StudentVault. University Library System.
+        </div>
+    </div>
+
+    <!-- Right Panel: Form -->
+    <div class="flex-1 flex items-center justify-center p-6 sm:p-12" style="background: var(--bg-primary);">
+        <div class="w-full max-w-md">
+
+            <!-- Mobile logo -->
+            <div class="lg:hidden flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg,#1485e0,#0e3a5e);">
+                    <i class="fa-solid fa-building-columns text-white"></i>
+                </div>
+                <span class="font-bold text-xl" style="color: var(--text-primary);">StudentVault</span>
+            </div>
+
+            <h2 class="text-3xl font-extrabold mb-1" style="color: var(--text-primary);">Welcome back</h2>
+            <p class="mb-8 text-sm" style="color: var(--text-muted);">Sign in to access your library dashboard.</p>
+
+            <!-- Email-not-verified banner (hidden by default) -->
+            <div id="verify-banner" class="hidden mb-6 rounded-xl p-4" style="background:#fef3c7; border:1.5px solid #f59e0b;">
+                <div class="flex items-start gap-3">
+                    <i class="fa-solid fa-envelope-circle-check text-amber-500 mt-0.5 flex-shrink-0"></i>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-amber-800">Email not verified</p>
+                        <p class="text-xs text-amber-700 mt-0.5">Please check your inbox and click the verification link we sent you before logging in.</p>
+                        <a href="/verify-email" class="inline-block mt-2 text-xs font-bold text-amber-900 underline hover:opacity-70">Didn't get the email? See help →</a>
+                    </div>
+                    <button onclick="document.getElementById('verify-banner').classList.add('hidden')" class="text-amber-500 hover:opacity-70 flex-shrink-0">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Role Toggle -->
+            <div class="flex p-1 rounded-xl mb-7 gap-1" style="background: var(--bg-card); border: 1.5px solid var(--border);">
+                <button type="button" id="btn-student" onclick="setRole('student')"
+                    class="role-tab active flex-1 py-2.5 text-sm font-semibold rounded-lg">
+                    <i class="fa-solid fa-user-graduate mr-1.5"></i>Student
+                </button>
+                <button type="button" id="btn-librarian" onclick="setRole('librarian')"
+                    class="role-tab flex-1 py-2.5 text-sm font-semibold rounded-lg" style="color: var(--text-muted);">
+                    <i class="fa-solid fa-user-tie mr-1.5"></i>Librarian
+                </button>
+                <input type="hidden" id="role" value="student">
+            </div>
+
+            <form id="loginForm" class="space-y-5" onsubmit="handleLogin(event)">
+                <!-- Email -->
+                <div>
+                    <label class="sv-label">Email Address</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                        <input type="email" id="email" name="email" required
+                            class="sv-input pl-10" placeholder="you@university.edu">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="sv-label mb-0">Password</label>
+                        <a href="/forgot-password" class="text-xs font-semibold" style="color: var(--accent);">Forgot password?</a>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                        <input type="password" id="password" name="password" required
+                            class="sv-input pl-10 pr-10" placeholder="••••••••">
+                        <button type="button" onclick="togglePwd('password', this)"
+                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm transition-colors"
+                            style="color: var(--text-muted);" tabindex="-1">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="loginBtn" class="sv-btn sv-btn-primary w-full justify-center py-3 text-base mt-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full" style="border-top: 1px solid var(--border);"></div>
+                </div>
+                <div class="relative flex justify-center">
+                    <span class="px-4 text-xs font-medium" style="background: var(--bg-primary); color: var(--text-muted);">OR CONTINUE WITH</span>
+                </div>
+            </div>
+
+            <!-- Google -->
+            <a href="/api/auth/google"
+                class="flex items-center justify-center gap-3 w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all hover:scale-[1.02]"
+                style="background: var(--bg-card); border: 1.5px solid var(--border); color: var(--text-secondary);">
+                <svg class="w-4 h-4" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.8 0 6.9 5.4 3 13.3l7.8 6C12.7 13.3 17.9 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.5 37.5 46.6 31.5 46.6 24.5z"/>
+                    <path fill="#FBBC05" d="M10.8 28.7c-.6-1.7-.9-3.5-.9-5.2s.3-3.5.9-5.2L3 12.3C1.1 16 0 20.1 0 24.5s1.1 8.5 3 12.2l7.8-6z"/>
+                    <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.1 0-11.3-3.8-13.2-9.3l-7.8 6C6.9 42.6 14.8 48 24 48z"/>
+                </svg>
+                Sign in with Google
+            </a>
+
+            <p class="mt-7 text-center text-sm" style="color: var(--text-muted);">
+                No account yet?
+                <a href="/signup" class="font-bold" style="color: var(--accent);">Create one free</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function setRole(role) {
+    document.getElementById('role').value = role;
+    const s = document.getElementById('btn-student');
+    const l = document.getElementById('btn-librarian');
+    if (role === 'student') {
+        s.classList.add('active'); l.classList.remove('active');
+        l.style.color = 'var(--text-muted)';
+    } else {
+        l.classList.add('active'); s.classList.remove('active');
+        s.style.color = 'var(--text-muted)';
+    }
+}
+
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const isText = inp.type === 'text';
+    inp.type = isText ? 'password' : 'text';
+    btn.innerHTML = isText ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash"></i>';
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+    btn.disabled = true;
+
+    const role  = document.getElementById('role').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, role }),
+            credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Login successful! Redirecting…', 'success');
+            setTimeout(() => {
+                window.location.href = role === 'librarian' ? '/librarian/dashboard' : '/student/dashboard';
+            }, 800);
+        } else {
+            if (data.notVerified) {
+                // Show a special banner for unverified emails
+                showEmailBanner();
+            } else {
+                showToast(data.message || 'Login failed. Please try again.', 'error');
+            }
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
+            btn.disabled = false;
+        }
+    } catch (err) {
+        showToast('Network error. Please try again.', 'error');
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign In';
+        btn.disabled = false;
+    }
+}
+
+// Show email-not-verified banner
+function showEmailBanner() {
+    document.getElementById('verify-banner').classList.remove('hidden');
+    document.getElementById('verify-banner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Show success banner if redirected here after signup
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('registered') === '1') {
+        // Wait for showToast to be available (header loads it)
+        setTimeout(() => {
+            showToast('🎉 Account created! Please sign in to continue.', 'success', 4000);
+        }, 300);
+        // Clean the URL without reload
+        window.history.replaceState({}, '', '/login');
+    }
+})();
+</script>
+
+<%- include('../partials/footer') %>

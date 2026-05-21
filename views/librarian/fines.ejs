@@ -1,0 +1,428 @@
+<%- include('../partials/header', { title: 'Fine Tracker – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+            <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">Fine Tracker</h1>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Track overdue fines and add custom penalties.</p>
+        </div>
+        <div class="flex gap-3 items-center flex-wrap">
+            <div class="flex items-center rounded-xl px-4 py-2.5 gap-3 w-full sm:w-60" style="background: var(--bg-card); border: 1.5px solid var(--border);">
+                <i class="fa-solid fa-search text-sm" style="color: var(--text-muted);"></i>
+                <input type="text" id="fineSearch" oninput="filterFines()" placeholder="Search student or book…"
+                    class="bg-transparent border-none outline-none text-sm flex-1" style="color: var(--text-primary); font-family: Outfit,sans-serif;">
+            </div>
+            <button onclick="toggleModal('customFineModal')" class="sv-btn sv-btn-primary flex-shrink-0">
+                <i class="fa-solid fa-plus"></i> Add Custom Fine
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-7">
+        <div class="sv-stat-card" style="border-left: 4px solid #ef4444;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background: #fee2e2;">
+                <i class="fa-solid fa-clock text-red-500 text-lg"></i>
+            </div>
+            <p class="text-2xl font-extrabold" style="color: var(--text-primary);">₹<%= totalOutstanding.toFixed(0) %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Overdue Outstanding</p>
+        </div>
+        <div class="sv-stat-card" style="border-left: 4px solid #10b981;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background: #d1fae5;">
+                <i class="fa-solid fa-indian-rupee-sign text-emerald-500 text-lg"></i>
+            </div>
+            <p class="text-2xl font-extrabold" style="color: var(--text-primary);">₹<%= totalCollected.toFixed(0) %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Overdue Collected</p>
+        </div>
+        <div class="sv-stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background: #fef3c7;">
+                <i class="fa-solid fa-pen-to-square text-amber-500 text-lg"></i>
+            </div>
+            <p class="text-2xl font-extrabold" style="color: var(--text-primary);">₹<%= customOutstanding.toFixed(0) %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Custom Outstanding</p>
+        </div>
+        <div class="sv-stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background: #ede9fe;">
+                <i class="fa-solid fa-check-double text-purple-500 text-lg"></i>
+            </div>
+            <p class="text-2xl font-extrabold" style="color: var(--text-primary);">₹<%= customCollected.toFixed(0) %></p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">Custom Collected</p>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="flex gap-2 mb-5 flex-wrap">
+        <button class="filter-pill active" onclick="setFineFilter(this,'all')">All Records</button>
+        <button class="filter-pill" onclick="setFineFilter(this,'unpaid')">
+            <i class="fa-solid fa-circle-exclamation mr-1 text-red-500"></i>Unpaid
+        </button>
+        <button class="filter-pill" onclick="setFineFilter(this,'paid')">
+            <i class="fa-solid fa-circle-check mr-1 text-emerald-500"></i>Paid
+        </button>
+    </div>
+
+    <!-- ── Section 1: Overdue Fines ────────────────────────────────────── -->
+    <h2 class="text-base font-bold mb-3" style="color:var(--text-primary);">
+        <i class="fa-solid fa-clock mr-2 text-red-500"></i>Overdue Fines
+        <span class="sv-badge sv-badge-red ml-2"><%= fines.length %></span>
+    </h2>
+    <div class="sv-card overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+            <table class="sv-table" id="finesTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Book</th>
+                        <th>Due Date</th>
+                        <th>Overdue Days</th>
+                        <th>Fine (₹)</th>
+                        <th>Status</th>
+                        <th class="text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (fines && fines.length > 0) { %>
+                        <% fines.forEach(f => { %>
+                        <tr data-student="<%= f.student.name.toLowerCase() %>" data-book="<%= f.book.title.toLowerCase() %>"
+                            data-paid="<%= f.finePaid ? 'paid' : 'unpaid' %>">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <img src="<%= f.student.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(f.student.name)+'&background=1485e0&color=fff&bold=true&size=32' %>"
+                                        class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+                                    <div>
+                                        <p class="font-semibold text-sm" style="color:var(--text-primary);"><%= f.student.name %></p>
+                                        <p class="text-xs" style="color:var(--text-muted);"><%= f.student.email %></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-sm font-semibold" style="color:var(--text-primary);"><%= f.book.title %></td>
+                            <td class="text-sm" style="color:<%= f.overdueDays > 0 ? '#dc2626' : 'var(--text-muted)' %>;">
+                                <%= new Date(f.dueDate).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                            </td>
+                            <td>
+                                <% if (f.overdueDays > 0) { %>
+                                <span class="sv-badge sv-badge-red"><%= f.overdueDays %>d</span>
+                                <% } else { %><span class="text-xs" style="color:var(--text-muted);">—</span><% } %>
+                            </td>
+                            <td>
+                                <span class="font-bold" style="color:<%= f.fineAmount > 0 ? '#dc2626' : 'var(--text-muted)' %>;">
+                                    ₹<%= f.fineAmount.toFixed(0) %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (f.finePaid) { %>
+                                <span class="sv-badge sv-badge-green"><i class="fa-solid fa-circle-check"></i> Paid</span>
+                                <% } else if (f.fineAmount > 0) { %>
+                                <span class="sv-badge sv-badge-red"><i class="fa-solid fa-clock"></i> Unpaid</span>
+                                <% } else { %><span class="sv-badge sv-badge-green">No Fine</span><% } %>
+                            </td>
+                            <td class="text-right">
+                                <% if (!f.finePaid && f.fineAmount > 0) { %>
+                                <button onclick="markPaid('<%= f._id %>')" class="sv-btn sv-btn-success text-xs py-1.5 px-3">
+                                    <i class="fa-solid fa-check"></i> Mark Paid
+                                </button>
+                                <% } else if (f.finePaid) { %>
+                                <span class="text-xs" style="color:var(--text-muted);">✓ Settled</span>
+                                <% } else { %><span class="text-xs" style="color:var(--text-muted);">—</span><% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="7" class="py-12 text-center">
+                            <i class="fa-solid fa-circle-check text-4xl mb-3 block text-emerald-400"></i>
+                            <p class="text-sm" style="color:var(--text-muted);">No overdue fines — all clear!</p>
+                        </td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── Section 2: Custom Fines ─────────────────────────────────────── -->
+    <h2 class="text-base font-bold mb-3" style="color:var(--text-primary);">
+        <i class="fa-solid fa-pen-to-square mr-2 text-amber-500"></i>Custom Fines
+        <span class="sv-badge sv-badge-amber ml-2"><%= customFines.length %></span>
+    </h2>
+    <div class="sv-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="sv-table" id="customFinesTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Reason</th>
+                        <th>Amount (₹)</th>
+                        <th>Added On</th>
+                        <th>Added By</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (customFines && customFines.length > 0) { %>
+                        <% customFines.forEach(cf => { %>
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <img src="<%= cf.student.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(cf.student.name)+'&background=f59e0b&color=fff&bold=true&size=32' %>"
+                                        class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+                                    <div>
+                                        <p class="font-semibold text-sm" style="color:var(--text-primary);"><%= cf.student.name %></p>
+                                        <p class="text-xs" style="color:var(--text-muted);"><%= cf.student.email %></p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-sm" style="color:var(--text-primary);"><%= cf.reason %></td>
+                            <td>
+                                <span class="font-bold text-amber-600">₹<%= cf.amount.toFixed(0) %></span>
+                            </td>
+                            <td class="text-sm" style="color:var(--text-muted);">
+                                <%= new Date(cf.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) %>
+                            </td>
+                            <td class="text-sm" style="color:var(--text-muted);">
+                                <%= cf.createdBy ? cf.createdBy.name : 'Librarian' %>
+                            </td>
+                            <td>
+                                <% if (cf.paid) { %>
+                                <div>
+                                    <span class="sv-badge sv-badge-green"><i class="fa-solid fa-circle-check"></i> Paid</span>
+                                    <p class="text-xs mt-1" style="color:var(--text-muted);">
+                                        <%= cf.paidDate ? new Date(cf.paidDate).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '' %>
+                                    </p>
+                                </div>
+                                <% } else { %>
+                                <span class="sv-badge sv-badge-amber"><i class="fa-solid fa-hourglass-half"></i> Pending</span>
+                                <% } %>
+                            </td>
+                            <td class="text-right">
+                                <div class="flex gap-2 justify-end">
+                                    <% if (!cf.paid) { %>
+                                    <button onclick="markCustomPaid('<%= cf._id %>')"
+                                        class="sv-btn sv-btn-success text-xs py-1.5 px-3">
+                                        <i class="fa-solid fa-check"></i> Mark Paid
+                                    </button>
+                                    <% } %>
+                                    <button onclick="deleteCustomFine('<%= cf._id %>')"
+                                        class="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-80"
+                                        style="background:#fee2e2; color:#dc2626;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="7" class="py-12 text-center">
+                            <i class="fa-solid fa-pen-to-square text-4xl mb-3 block" style="color:var(--border);"></i>
+                            <p class="text-sm mb-2" style="color:var(--text-muted);">No custom fines added yet.</p>
+                            <button onclick="toggleModal('customFineModal')" class="sv-btn sv-btn-primary text-xs">
+                                <i class="fa-solid fa-plus"></i> Add Custom Fine
+                            </button>
+                        </td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+</div>
+</div>
+
+<!-- ── Add Custom Fine Modal ──────────────────────────────────────────────── -->
+<div id="customFineModal" class="sv-modal-overlay">
+    <div class="sv-modal max-w-md">
+        <div class="sv-modal-header">
+            <h3 class="text-base font-bold" style="color:var(--text-primary);">
+                <i class="fa-solid fa-pen-to-square mr-2 text-amber-500"></i>Add Custom Fine
+            </h3>
+            <button onclick="toggleModal('customFineModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--bg-primary); color:var(--text-muted);">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sv-modal-body space-y-4">
+            <!-- Student Picker -->
+            <div>
+                <label class="sv-label">Student <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <input type="text" id="student-search" placeholder="Search student name or email…"
+                        class="sv-input pr-10" oninput="filterStudentDropdown()" autocomplete="off">
+                    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-sm" style="color:var(--text-muted);"></i>
+                </div>
+                <div id="student-dropdown" class="hidden mt-1 rounded-xl overflow-hidden shadow-lg" style="border:1.5px solid var(--border); background:var(--bg-card); max-height:200px; overflow-y:auto;">
+                    <% students.forEach(s => { %>
+                    <div class="student-option flex items-center gap-3 px-4 py-3 cursor-pointer hover:opacity-80 transition-all"
+                        style="border-bottom:1px solid var(--border);"
+                        data-id="<%= s._id %>" data-name="<%= s.name %>" data-email="<%= s.email %>"
+                        onclick="selectStudent(this)">
+                        <img src="<%= s.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(s.name)+'&background=1485e0&color=fff&bold=true&size=32' %>"
+                            class="w-8 h-8 rounded-full flex-shrink-0" alt="">
+                        <div>
+                            <p class="text-sm font-semibold" style="color:var(--text-primary);"><%= s.name %></p>
+                            <p class="text-xs" style="color:var(--text-muted);"><%= s.email %></p>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+                <input type="hidden" id="cf-student-id">
+                <p id="cf-student-selected" class="text-xs mt-1 hidden" style="color:var(--accent);"></p>
+            </div>
+
+            <!-- Amount -->
+            <div>
+                <label class="sv-label">Fine Amount (₹) <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold" style="color:var(--text-muted);">₹</span>
+                    <input type="number" id="cf-amount" class="sv-input pl-8" placeholder="0" min="1" step="1">
+                </div>
+                <!-- Quick amounts -->
+                <div class="flex gap-2 mt-2 flex-wrap">
+                    <span class="text-xs" style="color:var(--text-muted);">Quick:</span>
+                    <% [10,25,50,100,200,500].forEach(amt => { %>
+                    <button type="button" onclick="document.getElementById('cf-amount').value=<%= amt %>"
+                        class="text-xs px-2.5 py-1 rounded-lg font-semibold hover:opacity-80 transition-all"
+                        style="background:var(--bg-primary); border:1.5px solid var(--border); color:var(--text-secondary);">
+                        ₹<%= amt %>
+                    </button>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Reason -->
+            <div>
+                <label class="sv-label">Reason <span class="text-red-500">*</span></label>
+                <textarea id="cf-reason" rows="3" class="sv-input resize-none"
+                    placeholder="e.g. Damaged book, Lost book, Late return penalty…"></textarea>
+                <!-- Preset reasons -->
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <% ['Lost book','Damaged book','Torn pages','Lost library card','Administrative fee'].forEach(r => { %>
+                    <button type="button" onclick="document.getElementById('cf-reason').value='<%= r %>'"
+                        class="text-xs px-2.5 py-1 rounded-full font-medium hover:opacity-80 transition-all"
+                        style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">
+                        <%= r %>
+                    </button>
+                    <% }) %>
+                </div>
+            </div>
+        </div>
+        <div class="sv-modal-footer">
+            <button onclick="toggleModal('customFineModal')" class="sv-btn sv-btn-secondary">Cancel</button>
+            <button onclick="submitCustomFine()" class="sv-btn sv-btn-primary">
+                <i class="fa-solid fa-plus"></i> Add Fine
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.filter-pill { padding:6px 16px; border-radius:999px; font-size:.82rem; font-weight:600; cursor:pointer; border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-muted); transition:all .2s; }
+.filter-pill.active { background:linear-gradient(135deg,#1485e0,#0e3a5e); color:white; border-color:transparent; box-shadow:0 4px 12px rgba(20,133,224,.3); }
+</style>
+
+<script>
+let activeFineFilter = 'all';
+
+function setFineFilter(btn, filter) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    activeFineFilter = filter;
+    filterFines();
+}
+
+function filterFines() {
+    const q = document.getElementById('fineSearch').value.toLowerCase();
+    document.querySelectorAll('#finesTable tbody tr[data-student]').forEach(row => {
+        const matchSearch = row.dataset.student.includes(q) || row.dataset.book.includes(q);
+        const matchFilter = activeFineFilter === 'all' || row.dataset.paid === activeFineFilter;
+        row.style.display = (matchSearch && matchFilter) ? '' : 'none';
+    });
+}
+
+async function markPaid(id) {
+    if (!confirm('Mark this overdue fine as paid?')) return;
+    try {
+        const res  = await fetch(`/api/fines/${id}/pay`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) { showToast('✅ ' + data.message, 'success'); setTimeout(() => location.reload(), 900); }
+        else { showToast(data.message || 'Error', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+
+// ── Custom Fine Modal ────────────────────────────────────────────────────────
+function filterStudentDropdown() {
+    const q = document.getElementById('student-search').value.toLowerCase();
+    const dd = document.getElementById('student-dropdown');
+    dd.classList.toggle('hidden', !q);
+    document.querySelectorAll('.student-option').forEach(opt => {
+        const match = opt.dataset.name.toLowerCase().includes(q) || opt.dataset.email.toLowerCase().includes(q);
+        opt.style.display = match ? '' : 'none';
+    });
+}
+
+function selectStudent(el) {
+    document.getElementById('cf-student-id').value = el.dataset.id;
+    document.getElementById('student-search').value = el.dataset.name;
+    document.getElementById('cf-student-selected').textContent = '✓ Selected: ' + el.dataset.name;
+    document.getElementById('cf-student-selected').classList.remove('hidden');
+    document.getElementById('student-dropdown').classList.add('hidden');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+    if (!e.target.closest('#student-search') && !e.target.closest('#student-dropdown')) {
+        document.getElementById('student-dropdown').classList.add('hidden');
+    }
+});
+
+async function submitCustomFine() {
+    const studentId = document.getElementById('cf-student-id').value;
+    const amount    = document.getElementById('cf-amount').value;
+    const reason    = document.getElementById('cf-reason').value.trim();
+
+    if (!studentId) { showToast('Please select a student', 'warning'); return; }
+    if (!amount || Number(amount) < 1) { showToast('Enter a valid amount (min ₹1)', 'warning'); return; }
+    if (!reason) { showToast('Please enter a reason', 'warning'); return; }
+
+    try {
+        const res  = await fetch('/api/fines/custom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ studentId, amount: Number(amount), reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ ' + data.message, 'success');
+            toggleModal('customFineModal');
+            setTimeout(() => location.reload(), 900);
+        } else { showToast(data.message || 'Error', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+
+async function markCustomPaid(id) {
+    if (!confirm('Mark this custom fine as paid?')) return;
+    try {
+        const res  = await fetch(`/api/fines/custom/${id}/pay`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) { showToast('✅ ' + data.message, 'success'); setTimeout(() => location.reload(), 900); }
+        else { showToast(data.message || 'Error', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+
+async function deleteCustomFine(id) {
+    if (!confirm('Delete this custom fine record? This cannot be undone.')) return;
+    try {
+        const res  = await fetch(`/api/fines/custom/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('🗑️ ' + data.message, 'info'); setTimeout(() => location.reload(), 900); }
+        else { showToast(data.message || 'Error', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+</script>
+
+<%- include('../partials/footer') %>

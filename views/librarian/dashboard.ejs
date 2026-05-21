@@ -1,0 +1,165 @@
+<%- include('../partials/header', { title: 'Librarian Dashboard – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+            <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">Dashboard Overview</h1>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">
+                Welcome back, <strong style="color: var(--text-primary);"><%= user.name %></strong> · <%= new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' }) %>
+            </p>
+        </div>
+        <a href="/librarian/books" class="sv-btn sv-btn-primary">
+            <i class="fa-solid fa-plus"></i> Add New Book
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+        <div class="sv-stat-card" style="border-left: 4px solid #3b82f6;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#eff6ff;">
+                <i class="fa-solid fa-users text-blue-500 text-lg"></i>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.totalStudents %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Total Students</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid #10b981;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#f0fdf4;">
+                <i class="fa-solid fa-book-open text-emerald-500 text-lg"></i>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.totalBooks %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Total Books</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#f5f3ff;">
+                <i class="fa-solid fa-hand-holding-hand text-purple-500 text-lg"></i>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.issuedBooksCount %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Books Issued</p>
+        </div>
+
+        <div class="sv-stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#fffbeb;">
+                <i class="fa-solid fa-inbox text-amber-500 text-lg"></i>
+            </div>
+            <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.pendingRequestsCount %></p>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">Pending Requests</p>
+        </div>
+    </div>
+
+    <!-- Two column -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
+        <!-- Recent Requests (bigger) -->
+        <div class="sv-card p-6 lg:col-span-3">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold" style="color: var(--text-primary);">
+                    <i class="fa-solid fa-inbox text-brand-500 mr-2"></i>Recent Requests
+                </h3>
+                <a href="/librarian/requests" class="text-xs font-bold" style="color: var(--accent);">View all →</a>
+            </div>
+
+            <% if (recentRequests && recentRequests.length > 0) { %>
+                <div class="space-y-3">
+                    <% recentRequests.forEach(req => { %>
+                    <div class="flex items-center justify-between p-4 rounded-xl gap-4" style="background: var(--bg-primary); border: 1px solid var(--border);">
+                        <div class="flex items-center gap-3">
+                            <img src="<%= req.student.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(req.student.name)+'&background=1485e0&color=fff&bold=true' %>"
+                                class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="<%= req.student.name %>">
+                            <div>
+                                <p class="text-sm font-bold" style="color: var(--text-primary);"><%= req.student.name %></p>
+                                <p class="text-xs" style="color: var(--text-muted);">wants "<%= req.book.title %>"</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button onclick="handleRequestAction('<%= req._id %>', 'approve')"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                                style="background:#d1fae5; color:#059669;" title="Approve">
+                                <i class="fa-solid fa-check text-xs"></i>
+                            </button>
+                            <button onclick="handleRequestAction('<%= req._id %>', 'reject')"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                                style="background:#fee2e2; color:#dc2626;" title="Reject">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-10">
+                    <i class="fa-solid fa-inbox text-4xl mb-3 block" style="color: var(--border);"></i>
+                    <p class="text-sm" style="color: var(--text-muted);">No pending requests</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Overdue Alerts (smaller) -->
+        <div class="sv-card p-6 lg:col-span-2">
+            <div class="flex items-center gap-2 mb-5">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#fee2e2;">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-xs"></i>
+                </div>
+                <h3 class="text-base font-bold text-red-500">Overdue Alerts</h3>
+            </div>
+
+            <% if (overdueAlerts && overdueAlerts.length > 0) { %>
+                <div class="space-y-3">
+                    <% overdueAlerts.forEach(alert => {
+                        const nowDate = new Date();
+                        const diff = Math.ceil(Math.abs(nowDate - alert.dueDate) / 86400000);
+                    %>
+                    <div class="p-3 rounded-xl" style="background: #fef2f2; border-left: 3px solid #ef4444;">
+                        <p class="text-sm font-bold" style="color: var(--text-primary);">
+                            <i class="fa-solid fa-book text-red-400 mr-1"></i><%= alert.book.title %>
+                        </p>
+                        <p class="text-xs mt-1" style="color: var(--text-muted);">
+                            <i class="fa-solid fa-user mr-1"></i><%= alert.student.name %>
+                        </p>
+                        <span class="inline-block mt-2 text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                            <%= diff %> day<%= diff !== 1 ? 's' : '' %> overdue
+                        </span>
+                    </div>
+                    <% }) %>
+                </div>
+                <a href="/librarian/issued" class="block text-center text-xs font-bold mt-4" style="color: var(--accent);">View all issued →</a>
+            <% } else { %>
+                <div class="text-center py-10">
+                    <i class="fa-regular fa-circle-check text-4xl mb-3 block text-emerald-300"></i>
+                    <p class="text-sm" style="color: var(--text-muted);">No overdue books! 🎉</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+</main>
+</div>
+</div>
+
+<script>
+async function handleRequestAction(id, action) {
+    if (!confirm(`${action === 'approve' ? 'Approve' : 'Reject'} this request?`)) return;
+    try {
+        const res  = await fetch(`/api/issues/${id}/${action}`, { method: 'PUT' });
+        const data = await res.json();
+        if (data.success) {
+            showToast(action === 'approve' ? '✅ Request approved!' : '❌ Request rejected', action === 'approve' ? 'success' : 'error');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Action failed', 'error');
+        }
+    } catch (err) {
+        showToast('An error occurred', 'error');
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

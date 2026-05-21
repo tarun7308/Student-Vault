@@ -1,0 +1,123 @@
+<%- include('../partials/header', { title: 'Manage Students – StudentVault' }) %>
+
+<div class="flex h-screen w-full overflow-hidden">
+<%- include('../partials/sidebar', { role, path }) %>
+<div class="flex-1 flex flex-col overflow-hidden">
+<%- include('../partials/navbar', { role }) %>
+
+<main class="flex-1 overflow-y-auto p-5 sm:p-7" style="background: var(--bg-primary);">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+            <h1 class="text-2xl font-extrabold" style="color: var(--text-primary);">Manage Students</h1>
+            <p class="text-sm mt-1" style="color: var(--text-muted);">
+                View student records and library activity · <strong><%= students ? students.length : 0 %></strong> registered
+            </p>
+        </div>
+        <div class="flex items-center rounded-xl px-4 py-2.5 gap-3 w-full sm:w-72" style="background: var(--bg-card); border: 1.5px solid var(--border);">
+            <i class="fa-solid fa-search text-sm" style="color: var(--text-muted);"></i>
+            <input type="text" id="studentSearch" oninput="filterStudents()" placeholder="Search by name or email…"
+                class="bg-transparent border-none outline-none text-sm flex-1" style="color: var(--text-primary); font-family: Outfit, sans-serif;">
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="sv-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="sv-table" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th class="text-center">Books Issued</th>
+                        <th class="text-center">Fines</th>
+                        <th class="text-center">Joined</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (students && students.length > 0) { %>
+                        <% students.forEach(student => { %>
+                        <tr data-name="<%= student.name.toLowerCase() %>" data-email="<%= student.email.toLowerCase() %>">
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="relative flex-shrink-0">
+                                        <img src="<%= student.profilePic || 'https://ui-avatars.com/api/?name='+encodeURIComponent(student.name)+'&background=1485e0&color=fff&bold=true' %>"
+                                            class="w-9 h-9 rounded-full object-cover" alt="<%= student.name %>">
+                                        <% if (student.totalFines > 0) { %>
+                                        <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-red-500 border-2 border-white"></span>
+                                        <% } %>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-sm" style="color: var(--text-primary);"><%= student.name %></p>
+                                        <p class="text-xs" style="color: var(--text-muted);">Student</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-sm" style="color: var(--text-secondary);"><%= student.email %></span>
+                            </td>
+                            <td class="text-center">
+                                <span class="sv-badge sv-badge-blue"><%= student.issuedCount %> books</span>
+                            </td>
+                            <td class="text-center">
+                                <% if (student.totalFines > 0) { %>
+                                    <span class="sv-badge sv-badge-red font-bold">₹<%= student.totalFines.toFixed(0) %></span>
+                                <% } else { %>
+                                    <span class="sv-badge sv-badge-green">₹0</span>
+                                <% } %>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-xs" style="color: var(--text-muted);">
+                                    <%= new Date(student.createdAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %>
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <button onclick="deleteStudent('<%= student._id %>')"
+                                    class="w-8 h-8 rounded-lg inline-flex items-center justify-center transition-all hover:scale-110"
+                                    style="background: #fee2e2; color: #dc2626;" title="Remove Student">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="py-16 text-center">
+                                <i class="fa-solid fa-users text-5xl mb-4 block" style="color: var(--border);"></i>
+                                <p class="font-semibold" style="color: var(--text-muted);">No students registered yet</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+</div>
+</div>
+
+<script>
+function filterStudents() {
+    const q = document.getElementById('studentSearch').value.toLowerCase();
+    document.querySelectorAll('#studentsTable tbody tr[data-name]').forEach(row => {
+        row.style.display = (row.dataset.name.includes(q) || row.dataset.email.includes(q)) ? '' : 'none';
+    });
+}
+
+async function deleteStudent(id) {
+    if (!confirm('Remove this student from the system? This cannot be undone.')) return;
+    try {
+        const res  = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Student removed.', 'info');
+            setTimeout(() => window.location.reload(), 900);
+        } else { showToast(data.message || 'Deletion failed', 'error'); }
+    } catch { showToast('Network error', 'error'); }
+}
+</script>
+
+<%- include('../partials/footer') %>
