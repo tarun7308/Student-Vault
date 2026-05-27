@@ -22,37 +22,37 @@
 
     <!-- Stats -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-        <div class="sv-stat-card" style="border-left: 4px solid #3b82f6;">
+        <a href="/librarian/students" class="sv-stat-card block" style="border-left: 4px solid #3b82f6; text-decoration: none; cursor: pointer;">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#eff6ff;">
                 <i class="fa-solid fa-users text-blue-500 text-lg"></i>
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.totalStudents %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Total Students</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid #10b981;">
+        <a href="/librarian/books" class="sv-stat-card block" style="border-left: 4px solid #10b981; text-decoration: none; cursor: pointer;">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#f0fdf4;">
                 <i class="fa-solid fa-book-open text-emerald-500 text-lg"></i>
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.totalBooks %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Total Books</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid #8b5cf6;">
+        <a href="/librarian/issued" class="sv-stat-card block" style="border-left: 4px solid #8b5cf6; text-decoration: none; cursor: pointer;">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#f5f3ff;">
                 <i class="fa-solid fa-hand-holding-hand text-purple-500 text-lg"></i>
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.issuedBooksCount %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Books Issued</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid #f59e0b;">
+        <a href="/librarian/requests" class="sv-stat-card block" style="border-left: 4px solid #f59e0b; text-decoration: none; cursor: pointer;">
             <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style="background:#fffbeb;">
                 <i class="fa-solid fa-inbox text-amber-500 text-lg"></i>
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.pendingRequestsCount %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Pending Requests</p>
-        </div>
+        </a>
     </div>
 
     <!-- Two column -->
