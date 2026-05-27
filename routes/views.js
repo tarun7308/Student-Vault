@@ -23,10 +23,6 @@ const {
 router.get('/login',  (req, res) => res.render('auth/login'));
 router.get('/signup', (req, res) => res.render('auth/signup'));
 router.get('/',       (req, res) => res.redirect('/login'));
-router.get('/forgot-password', (req, res) => res.render('auth/forgot_password'));
-router.get('/reset-password/:token', (req, res) =>
-    res.render('auth/reset_password', { token: req.params.token })
-);
 router.get('/verify-email', (req, res) =>
     res.render('auth/verify_email', { status: req.query.status || 'pending' })
 );

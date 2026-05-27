@@ -69,7 +69,6 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/reviews',       require('./routes/reviews'));
 app.use('/api/categories',    require('./routes/categories'));
 app.use('/api/fines',         require('./routes/fines'));
-app.use('/api/password',      require('./routes/password'));
 
 // View Routes
 app.use('/', require('./routes/views'));
