@@ -156,6 +156,19 @@ async function handleReturn(id) {
         } else { showToast(data.message || 'Action failed', 'error'); }
     } catch { showToast('Network error', 'error'); }
 }
+
+// Auto-apply search from URL on load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search') || params.get('q');
+    if (searchVal) {
+        const issuedSearch = document.getElementById('issuedSearch');
+        if (issuedSearch) {
+            issuedSearch.value = searchVal;
+            filterIssued();
+        }
+    }
+})();
 </script>
 
 <%- include('../partials/footer') %>

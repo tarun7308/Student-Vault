@@ -360,6 +360,19 @@ async function submitReview() {
         }
     } catch { showToast('Network error', 'error'); }
 }
+
+// Auto-apply search from URL on load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search') || params.get('q');
+    if (searchVal) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = searchVal;
+            filterBooks();
+        }
+    }
+})();
 </script>
 
 <%- include('../partials/footer') %>

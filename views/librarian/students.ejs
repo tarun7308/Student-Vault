@@ -118,6 +118,19 @@ async function deleteStudent(id) {
         } else { showToast(data.message || 'Deletion failed', 'error'); }
     } catch { showToast('Network error', 'error'); }
 }
+
+// Auto-apply search from URL on load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search') || params.get('q');
+    if (searchVal) {
+        const studentSearch = document.getElementById('studentSearch');
+        if (studentSearch) {
+            studentSearch.value = searchVal;
+            filterStudents();
+        }
+    }
+})();
 </script>
 
 <%- include('../partials/footer') %>

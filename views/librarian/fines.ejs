@@ -423,6 +423,19 @@ async function deleteCustomFine(id) {
         else { showToast(data.message || 'Error', 'error'); }
     } catch { showToast('Network error', 'error'); }
 }
+
+// Auto-apply search from URL on load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const searchVal = params.get('search') || params.get('q');
+    if (searchVal) {
+        const fineSearch = document.getElementById('fineSearch');
+        if (fineSearch) {
+            fineSearch.value = searchVal;
+            filterFines();
+        }
+    }
+})();
 </script>
 
 <%- include('../partials/footer') %>

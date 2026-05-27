@@ -329,10 +329,12 @@ function filterTable() {
     if (el) el.textContent = visible;
 }
 
-// Auto-apply ?category= from URL (used by Categories page link)
+// Auto-apply ?category= or ?search= from URL on load
 (function applyUrlCategory() {
     const params = new URLSearchParams(window.location.search);
     const cat    = params.get('category');
+    const searchVal = params.get('search') || params.get('q');
+    
     if (cat) {
         activeCategoryFilter = cat.toLowerCase();
         // show a dismissible banner
@@ -348,6 +350,16 @@ function filterTable() {
                     style="background:#1d4ed8; color:white;">✕ Clear Filter</button>
             </div>`;
         document.querySelector('main').insertBefore(banner, document.querySelector('main').children[1]);
+    }
+    
+    if (searchVal) {
+        const bookSearch = document.getElementById('bookSearch');
+        if (bookSearch) {
+            bookSearch.value = searchVal;
+        }
+    }
+    
+    if (cat || searchVal) {
         filterTable();
     }
 })();

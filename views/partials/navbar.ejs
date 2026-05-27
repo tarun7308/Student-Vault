@@ -10,7 +10,7 @@
         <!-- Breadcrumb / Search -->
         <div class="hidden sm:flex items-center rounded-xl px-4 py-2.5 gap-3 flex-1 max-w-sm" style="background: var(--bg-primary); border: 1.5px solid var(--border);">
             <i class="fa-solid fa-search text-sm" style="color: var(--text-muted);"></i>
-            <input type="text" placeholder="Search books, students..." class="bg-transparent border-none outline-none text-sm flex-1" style="color: var(--text-primary); font-family: Outfit, sans-serif;" />
+            <input type="text" id="navbarSearch" oninput="handleNavbarSearch(this.value)" onkeyup="handleNavbarSearchKey(event)" placeholder="Search books, students..." class="bg-transparent border-none outline-none text-sm flex-1" style="color: var(--text-primary); font-family: Outfit, sans-serif;" />
         </div>
     </div>
 
@@ -350,5 +350,62 @@ function toggleNotifPanel() {
             }
         }
     } catch (_) {}
+})();
+
+// ─── Global Navbar Search System ──────────────────────────────────────────
+function handleNavbarSearch(val) {
+    const searchInputs = [
+        document.getElementById('searchInput'),  // student browse
+        document.getElementById('bookSearch'),   // librarian books
+        document.getElementById('studentSearch'),// librarian students
+        document.getElementById('issuedSearch'), // librarian issued
+        document.getElementById('fineSearch')    // librarian fines
+    ];
+    searchInputs.forEach(inp => {
+        if (inp) {
+            inp.value = val;
+            if (typeof inp.oninput === 'function') {
+                inp.oninput();
+            } else {
+                inp.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    });
+}
+
+function handleNavbarSearchKey(e) {
+    if (e.key === 'Enter') {
+        const val = e.target.value.trim();
+        if (!val) return;
+        
+        const hasLocalInput = !!(
+            document.getElementById('searchInput') ||
+            document.getElementById('bookSearch') ||
+            document.getElementById('studentSearch') ||
+            document.getElementById('issuedSearch') ||
+            document.getElementById('fineSearch')
+        );
+        
+        if (!hasLocalInput) {
+            const role = '<%= typeof role !== "undefined" ? role : "" %>';
+            if (role === 'librarian') {
+                window.location.href = `/librarian/books?search=${encodeURIComponent(val)}`;
+            } else {
+                window.location.href = `/student/browse?search=${encodeURIComponent(val)}`;
+            }
+        }
+    }
+}
+
+// Auto-fill navbar search input from URL on load
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('search') || params.get('q');
+    if (q) {
+        const navSearch = document.getElementById('navbarSearch');
+        if (navSearch) {
+            navSearch.value = q;
+        }
+    }
 })();
 </script>
