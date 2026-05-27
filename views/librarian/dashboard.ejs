@@ -80,7 +80,7 @@
                             </div>
                         </div>
                         <div class="flex gap-2 flex-shrink-0">
-                            <button onclick="handleRequestAction('<%= req._id %>', 'approve')"
+                            <button onclick="openApproveModal('<%= req._id %>', '<%= req.book.title.replace(/'/g, `\\'`) %>')"
                                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
                                 style="background:#d1fae5; color:#059669;" title="Approve">
                                 <i class="fa-solid fa-check text-xs"></i>
@@ -144,7 +144,90 @@
 </div>
 </div>
 
+<!-- Approve with Custom Due Date Modal -->
+<div id="approveModal" class="sv-modal-overlay">
+    <div class="sv-modal max-w-sm">
+        <div class="sv-modal-header">
+            <h3 class="text-base font-bold" style="color:var(--text-primary);">
+                <i class="fa-solid fa-calendar-check mr-2 text-emerald-500"></i>Set Due Date
+            </h3>
+            <button onclick="toggleModal('approveModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--bg-primary);color:var(--text-muted);">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="sv-modal-body space-y-4">
+            <input type="hidden" id="approve-request-id">
+            <p class="text-sm" style="color:var(--text-secondary);">
+                Approving: <strong id="approve-book-title" style="color:var(--text-primary);"></strong>
+            </p>
+            <div>
+                <label class="sv-label">Due Date <span class="text-red-500">*</span></label>
+                <input type="date" id="approve-due-date" class="sv-input"
+                    min="<%= new Date(Date.now() + 86400000).toISOString().split('T')[0] %>">
+                <p class="text-xs mt-1" style="color:var(--text-muted);">Default: 14 days from today</p>
+            </div>
+            <!-- Quick presets -->
+            <div class="flex flex-wrap gap-2">
+                <span class="text-xs font-semibold" style="color:var(--text-muted);">Quick:</span>
+                <button type="button" onclick="setDueDays(7)"  class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#dbeafe;color:#1d4ed8;">7 days</button>
+                <button type="button" onclick="setDueDays(14)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#d1fae5;color:#065f46;">14 days</button>
+                <button type="button" onclick="setDueDays(21)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#fef3c7;color:#92400e;">21 days</button>
+                <button type="button" onclick="setDueDays(30)" class="text-xs px-2.5 py-1 rounded-lg font-semibold transition-all hover:opacity-80" style="background:#ede9fe;color:#5b21b6;">30 days</button>
+            </div>
+        </div>
+        <div class="sv-modal-footer">
+            <button onclick="toggleModal('approveModal')" class="sv-btn sv-btn-secondary">Cancel</button>
+            <button onclick="confirmApprove()" class="sv-btn sv-btn-success">
+                <i class="fa-solid fa-check"></i> Confirm Approval
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+// Set default due date to 14 days from today on page load
+(function() {
+    setDueDays(14);
+})();
+
+function setDueDays(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    const dateInput = document.getElementById('approve-due-date');
+    if (dateInput) {
+        dateInput.value = d.toISOString().split('T')[0];
+    }
+}
+
+function openApproveModal(id, title) {
+    document.getElementById('approve-request-id').value = id;
+    document.getElementById('approve-book-title').textContent = title;
+    setDueDays(14); // reset to default
+    toggleModal('approveModal');
+}
+
+async function confirmApprove() {
+    const id      = document.getElementById('approve-request-id').value;
+    const dueDate = document.getElementById('approve-due-date').value;
+    if (!dueDate) { showToast('Please select a due date', 'warning'); return; }
+
+    try {
+        const res  = await fetch(`/api/issues/${id}/approve`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dueDate })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ Request approved! Book issued.', 'success');
+            toggleModal('approveModal');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Action failed', 'error');
+        }
+    } catch { showToast('Network error', 'error'); }
+}
+
 async function handleRequestAction(id, action) {
     if (!confirm(`${action === 'approve' ? 'Approve' : 'Reject'} this request?`)) return;
     try {
