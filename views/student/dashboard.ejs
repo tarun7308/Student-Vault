@@ -25,7 +25,7 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
 
-        <div class="sv-stat-card" style="border-left: 4px solid #3b82f6;">
+        <a href="/student/mybooks" class="sv-stat-card block" style="border-left: 4px solid #3b82f6; text-decoration: none; cursor: pointer;">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#eff6ff;">
                     <i class="fa-solid fa-book-open text-blue-500 text-lg"></i>
@@ -34,9 +34,9 @@
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.booksIssued %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Books Issued</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid #f59e0b;">
+        <a href="/student/requests" class="sv-stat-card block" style="border-left: 4px solid #f59e0b; text-decoration: none; cursor: pointer;">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:#fffbeb;">
                     <i class="fa-solid fa-hourglass-half text-amber-500 text-lg"></i>
@@ -45,9 +45,9 @@
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.pendingRequests %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Pending Requests</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid <%= stats.overdueCount > 0 ? '#ef4444' : '#10b981' %>;">
+        <a href="/student/mybooks" class="sv-stat-card block" style="border-left: 4px solid <%= stats.overdueCount > 0 ? '#ef4444' : '#10b981' %>; text-decoration: none; cursor: pointer;">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:<%= stats.overdueCount > 0 ? '#fef2f2' : '#f0fdf4' %>;">
                     <i class="fa-solid fa-triangle-exclamation text-lg" style="color:<%= stats.overdueCount > 0 ? '#ef4444' : '#10b981' %>;"></i>
@@ -58,20 +58,20 @@
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);"><%= stats.overdueCount %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Overdue Books</p>
-        </div>
+        </a>
 
-        <div class="sv-stat-card" style="border-left: 4px solid <%= stats.totalFines > 0 ? '#ef4444' : '#10b981' %>;">
+        <a href="/student/mybooks" class="sv-stat-card block" style="border-left: 4px solid <%= stats.totalFines > 0 ? '#ef4444' : '#10b981' %>; text-decoration: none; cursor: pointer;">
             <div class="flex items-center justify-between mb-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:<%= stats.totalFines > 0 ? '#fef2f2' : '#f0fdf4' %>;">
                     <i class="fa-solid fa-indian-rupee-sign text-lg" style="color:<%= stats.totalFines > 0 ? '#ef4444' : '#10b981' %>;"></i>
                 </div>
                 <% if (stats.totalFines > 0) { %>
-                <a href="/student/mybooks" class="text-xs font-bold sv-badge sv-badge-red">Pay Now</a>
+                <span class="text-xs font-bold sv-badge sv-badge-red">Pay Now</span>
                 <% } %>
             </div>
             <p class="text-3xl font-extrabold" style="color: var(--text-primary);">₹<%= stats.totalFines.toFixed(0) %></p>
             <p class="text-sm mt-1" style="color: var(--text-muted);">Total Fines</p>
-        </div>
+        </a>
     </div>
 
     <!-- Main Grid -->
