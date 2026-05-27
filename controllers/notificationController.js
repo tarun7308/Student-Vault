@@ -191,6 +191,30 @@ const getNotifications = async (req, res) => {
                     link: '/librarian/requests'
                 });
             });
+
+            // ── 4. Recently returned books (last 7 days) ──────────────────────
+            const returned = await IssuedBook.find({
+                status: 'returned',
+                returnDate: { $gte: new Date(Date.now() - 7 * 86400000) }
+            })
+                .populate('student', 'name')
+                .populate('book', 'title')
+                .sort({ returnDate: -1 })
+                .limit(6);
+
+            returned.forEach(ib => {
+                if (ib.student && ib.book) {
+                    notifications.push({
+                        id: ib._id,
+                        type: 'success',
+                        icon: 'fa-rotate-left',
+                        title: 'Book Returned',
+                        message: `${ib.student.name} returned "${ib.book.title}".`,
+                        time: ib.returnDate,
+                        link: '/librarian/issued'
+                    });
+                }
+            });
         }
 
         // Sort all notifications by time (newest first)
