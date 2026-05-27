@@ -187,36 +187,67 @@
     ].map(d => new Date(d).toDateString());
 
     const today = new Date();
-    const year  = today.getFullYear();
-    const month = today.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let displayYear = today.getFullYear();
+    let displayMonth = today.getMonth();
 
     const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const dayNames   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
-    let html = `<div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-bold" style="color: var(--text-primary);">${monthNames[month]} ${year}</span>
-    </div>
-    <div class="cal-grid">`;
+    function renderCalendar() {
+        const firstDay = new Date(displayYear, displayMonth, 1).getDay();
+        const daysInMonth = new Date(displayYear, displayMonth + 1, 0).getDate();
 
-    dayNames.forEach(d => {
-        html += `<div class="cal-day text-xs font-bold" style="color: var(--text-muted);">${d}</div>`;
-    });
+        let html = `<div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-bold" style="color: var(--text-primary);">${monthNames[displayMonth]} ${displayYear}</span>
+            <div class="flex items-center gap-1">
+                <button type="button" id="cal-prev" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800" style="color: var(--text-muted); cursor: pointer;">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <button type="button" id="cal-next" class="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800" style="color: var(--text-muted); cursor: pointer;">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+        <div class="cal-grid">`;
 
-    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day other-month"></div>`;
+        dayNames.forEach(d => {
+            html += `<div class="cal-day text-xs font-bold" style="color: var(--text-muted);">${d}</div>`;
+        });
 
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = new Date(year, month, d).toDateString();
-        const isToday = dateStr === today.toDateString();
-        const hasDue  = dueDates.includes(dateStr);
-        let cls = 'cal-day';
-        if (isToday) cls += ' today';
-        else if (hasDue) cls += ' has-due';
-        html += `<div class="${cls}" title="${hasDue ? 'Book due on this date!' : ''}">${d}</div>`;
+        for (let i = 0; i < firstDay; i++) {
+            html += `<div class="cal-day other-month"></div>`;
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = new Date(displayYear, displayMonth, d).toDateString();
+            const isToday = dateStr === today.toDateString();
+            const hasDue  = dueDates.includes(dateStr);
+            let cls = 'cal-day';
+            if (isToday) cls += ' today';
+            else if (hasDue) cls += ' has-due';
+            html += `<div class="${cls}" title="${hasDue ? 'Book due on this date!' : ''}">${d}</div>`;
+        }
+        html += '</div>';
+        document.getElementById('mini-calendar').innerHTML = html;
+
+        // Attach event listeners
+        document.getElementById('cal-prev').addEventListener('click', () => changeMonth(-1));
+        document.getElementById('cal-next').addEventListener('click', () => changeMonth(1));
     }
-    html += '</div>';
-    document.getElementById('mini-calendar').innerHTML = html;
+
+    function changeMonth(dir) {
+        displayMonth += dir;
+        if (displayMonth < 0) {
+            displayMonth = 11;
+            displayYear -= 1;
+        } else if (displayMonth > 11) {
+            displayMonth = 0;
+            displayYear += 1;
+        }
+        renderCalendar();
+    }
+
+    renderCalendar();
 })();
 
 // ---- Request Book ----
